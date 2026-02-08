@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <style>
+        #music-container {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+
+<body onload="load_tracks()">
+    <a href="index.html">home</a>
+    <h1>All music</h1>
+    <button id="random-play">riproduci casuale</button>
+    <form method="get" name="search-form">
+        <input type="text" placeholder="search" name="search" id="search">
+        <input type="submit">
+    </form>
+
+
+    <div id="music-container"></div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        let playlist;
+        if (params.get("playlist") != null) {
+            playlist = params.get("playlist");
+        } else {
+            playlist = "music";
+        }
+
+        const random_play = document.getElementById("random-play");
+        const search_bar = document.getElementById("search");
+
+
+        search_bar.addEventListener("keyup", function () {
+            const arr = Array.from(JSON.parse(sessionStorage.getItem("tracks_info")));
+            const tracks_info = new Map(arr);
+            let text_inserted = document.forms["search-form"]["search"].value;
+            console.log(text_inserted);
+            let found = new Map();
+
+            let title, author;
+            tracks.forEach((value, key) => {
+                title = value[0];
+                author = value[1];
+
+                title = title.toLowerCase();
+                author = author.toLowerCase();
+                text_inserted = text_inserted.toLowerCase();
+
+                if (title.includes(text_inserted) || author.includes(text_inserted)) {
+                    found.set(key, value);
+                }
+            })
+
+            //console.log('tracks_info :>> ', tracks_info);
+            console.log('found :>> ', found);
+            display_tracks(found);
+        })
+
+        async function load_tracks() {
+            const form_data = new FormData();
+            form_data.append("token", sessionStorage.getItem("API_token"));
+            form_data.append("playlist_name", playlist);
+
+            const tracks = await api_request("tracks", "POST", form_data);
+            const music_container = document.getElementById('music-container');
+
+            console.log('music_container :>> ', music_container);
+
+            let count = 0;
+            let ids = [];
+            let tracks_info = new Map();
+            tracks.forEach(t => {
+                ids.push(t.id);
+                tracks_info.set(t.id, [t.title, t.author])
+            });
+            display_tracks(tracks_info);
+            sessionStorage.setItem("queue", JSON.stringify(ids));
+            const arr = Array.from(tracks_info.entries());
+            sessionStorage.setItem("tracks_info", JSON.stringify(arr));
+            console.log('tracks_info :>> ', tracks_info);
+        }
+
+        function display_tracks(tracks) {
+            const music_container = document.getElementById('music-container');
+            music_container.innerHTML = "";
+
+            tracks.forEach((value, key) => {
+                const a = document.createElement("a");
+                a.href = "stream.html?id=" + key;
+                a.innerText = value[0] + "    (" + value[1] + ")"
+                music_container.appendChild(a);
+            })
+        }
+
+        function get_template_form(meth, form_data) {
+            return {
+                method: meth,
+                body: form_data
+            }
+        }
+
+        async function api_request(route, method, form_data) {
+            const API = "http://127.0.0.1:8000";
+            const API_ROUTE = API + "/" + route;
+            try {
+                const response = await fetch(API_ROUTE, get_template_form(method, form_data));
+                if (!response.ok) {
+                    throw new Error("Response status :" + response.status);
+                }
+
+                const result = await response.json();
+
+                return result;
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+
+        random_play.addEventListener("click", function () {
+            let queue = JSON.parse(sessionStorage.getItem("queue"));
+            let random_index = Math.floor(Math.random() * queue.length);
+            let track_id = queue[random_index];
+            console.log('queue :>> ', queue);
+            console.log('queue.length :>> ', queue.length);
+            console.log('random_index :>> ', random_index);
+            console.log('track_id :>> ', track_id);
+            window.location.replace("stream.html?id=" + track_id);
+        })
+    </script>
+</body>
+
+</html>

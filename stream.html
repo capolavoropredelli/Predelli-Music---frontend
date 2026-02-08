@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html>
+
+<head></head>
+
+<body>
+    <h1></h1>
+
+    <input type="checkbox" id="random" name="random">
+    <label for="random">random</label> <br>
+    <button id="skip">skip</button> <br>
+    <audio id="player" controls></audio>
+
+    <script>
+        // get info for API request
+        const query_params = new URLSearchParams(window.location.search);
+        const id = parseInt(query_params.get("id"));
+        const API = "http://127.0.0.1:8000";
+        const api_stream = API + "/stream/" + id;
+        const api_info = API + "/info/" + id;
+
+        // API request
+        get_info();
+
+        // getting document's elements
+        const audio = document.getElementById("player");
+        const skip_button = document.getElementById("skip");
+
+        // setting random or sequential queue
+        const random = document.getElementById("random");
+        if (sessionStorage.getItem("random") == "true") {
+            random.checked = true;
+        } else {
+            random.checked = false;
+        }
+
+        // adding API streaming for audio source
+        audio.src = api_stream;
+        audio.play();
+
+        // skipping and end of track handling
+        random.addEventListener("change", function () {
+            console.log('click :>> ');
+            if (random.checked) {
+                sessionStorage.setItem("random", true);
+                randomise_queue();
+            } else {
+                sessionStorage.setItem("random", false);
+                sort_queue();
+            }
+            console.log(sessionStorage.getItem("queue"));
+        })
+        skip_button.addEventListener("click", skip);
+        audio.addEventListener("ended", skip);
+
+        // functions
+        function randomise_queue() {
+
+            let queue = JSON.parse(sessionStorage.getItem("queue"));
+            let random_queue = new Array(queue.length);
+            let index;
+            for (let i = 0; i < queue.length; i++) {
+                index = Math.floor(Math.random() * queue.length);
+                while (random_queue[index] != undefined) {
+                    index++;
+                    if (index == random_queue.length) index = 0;
+                }
+                random_queue[index] = queue[i];
+            }
+
+            sessionStorage.setItem("queue", JSON.stringify(random_queue));
+        }
+
+        function sort_queue() {
+            let queue = JSON.parse(sessionStorage.getItem("queue"));
+
+            let n = queue.length;
+            let swapped;
+
+            do {
+                swapped = false;
+
+                for (let i = 0; i < n - 1; i++) {
+                    if (parseInt(queue[i]) > parseInt(queue[i + 1])) {
+                        let temp = queue[i];
+                        queue[i] = queue[i + 1];
+                        queue[i + 1] = temp;
+
+                        swapped = true;
+                    }
+                }
+                n--;
+
+            } while (swapped);
+
+            sessionStorage.setItem("queue", JSON.stringify(queue));
+
+        }
+
+
+        function next_in_queue() {
+            let queue = JSON.parse(sessionStorage.getItem("queue"));
+            let trovato = false;
+            let i = 0;
+            while (trovato == false) {
+                if (queue[i] == id) {
+                    trovato = true;
+                }
+                i++;
+            }
+
+            if (i == queue.lenght) i = 0;
+            return queue[i];
+        }
+
+        function skip() {
+            let next_track_id;
+            if (random.checked) {
+                sessionStorage.setItem("random", true);
+                next_track_id = Math.floor((Math.random() * sessionStorage.getItem("track-count"))) + 1;
+            } else {
+                sessionStorage.setItem("random", false);
+                next_track_id = id + 1;
+            }
+            window.location.replace("stream.html?id=" + next_track_id);
+        }
+
+        async function api_request(URL) {
+            try {
+                const response = await fetch(URL);
+                if (!response.ok) {
+                    throw new Error("Response status :" + response.status);
+                }
+
+                const result = await response.json();
+
+                return result;
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+
+        async function get_info() {
+            const result = await api_request(api_info);
+            title = result.title;
+            author = result.author;
+            const heading = document.querySelector("h1");
+            heading.innerText = title + " - " + author;
+        }
+    </script>
+</body>
+
+</html>

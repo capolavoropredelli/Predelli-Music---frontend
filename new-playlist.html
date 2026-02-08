@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <style>
+        #music-container {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+
+<body onload="load_tracks()">
+    <h1>New playlist</h1>
+    <form method="post" id="new-playlist-form" name="new-playlist-form">
+        <input type="text" placeholder="name" name="name">
+        <button id="cancel-button">cancel</button>
+        <input type="submit" value="add">
+
+
+        <h2>Choose tracks</h2>
+        <input type="text" placeholder="search" name="search" id="search">
+
+        <div id="music-container"></div>
+    </form>
+
+
+    <script>
+        const form = document.getElementById("new-playlist-form");
+        const search_bar = document.getElementById("search");
+        let playlist_tracks = [];
+
+        form.addEventListener("submit", async function () {
+            event.preventDefault();
+
+            const playlist_name = document.forms["new-playlist-form"]["name"].value;
+            playlist_tracks = JSON.parse(sessionStorage.getItem("playlist_tracks"));
+            console.log(playlist_tracks);
+
+            const form_data = new FormData();
+
+            form_data.append("token", sessionStorage.getItem("API_token"));
+            form_data.append("name", playlist_name);
+            form_data.append("tracks", playlist_tracks);
+
+            const result = await api_request("playlist", "POST", form_data);
+
+            if (result != null) {
+                console.log("Playlist added");
+                console.log(result);
+            }
+        })
+
+        search_bar.addEventListener("keyup", function () {
+            const arr = Array.from(JSON.parse(sessionStorage.getItem("tracks_info")));
+            const tracks_info = new Map(arr);
+            let text_inserted = document.forms["new-playlist-form"]["search"].value;
+            let found = new Map();
+
+            let info, title, author;
+            tracks_info.forEach((value, key) => {
+                title = value[0];
+                author = value[1];
+
+                title = title.toLowerCase();
+                author = author.toLowerCase();
+                text_inserted = text_inserted.toLowerCase();
+
+                if (title.includes(text_inserted) || author.includes(text_inserted)) {
+                    found.set(key, value);
+                }
+            })
+
+            //console.log('tracks_info :>> ', tracks_info);
+            console.log('found :>> ', found);
+            display_tracks(found);
+        })
+
+        async function load_tracks() {
+            const form_data = new FormData();
+            form_data.append("token", sessionStorage.getItem("API_token"));
+            form_data.append("playlist_name", "music");
+
+            const tracks = await api_request("tracks", "POST", form_data);
+
+            let tracks_info = new Map();
+            tracks.forEach(t => {
+                tracks_info.set(t.id, [t.title, t.author])
+            });
+            display_tracks(tracks_info);
+            const arr = Array.from(tracks_info.entries());
+            sessionStorage.setItem("tracks_info", JSON.stringify(arr));
+        }
+
+        function display_tracks(tracks) {
+            if (sessionStorage.getItem("playlist_tracks") == null) {
+                playlist_tracks = [];
+            } else {
+                playlist_tracks = Array.from(JSON.parse(sessionStorage.getItem("playlist_tracks")));
+            }
+            const music_container = document.getElementById('music-container');
+            music_container.innerHTML = "";
+
+            tracks.forEach((value, key) => {
+                const input = document.createElement("input");
+                const label = document.createElement("label");
+                const div = document.createElement("div");
+                input.type = "checkbox";
+                input.name = "track" + key;
+                input.id = "track" + key;
+                if (playlist_tracks.includes(String(key))) { input.checked = true; }
+                input.value = key;
+                label.for = key;
+                label.innerHTML = value[0] + ' - <span style="color: gray;">' + value[1] + "</span>";
+                div.appendChild(input);
+                div.appendChild(label);
+                music_container.appendChild(div);
+
+                input.addEventListener("change", function () {
+                    key = input.value
+                    if (input.checked) {
+                        if ((!playlist_tracks.includes(key))) playlist_tracks.push(key);
+                    } else {
+                        let index = playlist_tracks.indexOf(key);
+                        let sub_arr_1 = playlist_tracks.slice(0, index);
+                        let sub_arr_2 = playlist_tracks.slice((index + 1), playlist_tracks.length);
+                        playlist_tracks = sub_arr_1.concat(sub_arr_2);
+                    }
+                    sessionStorage.setItem("playlist_tracks", JSON.stringify(playlist_tracks))
+                    console.log(playlist_tracks)
+                })
+            })
+        }
+
+        function get_template_form(meth, form_data) {
+            return {
+                method: meth,
+                body: form_data
+            }
+        }
+
+        async function api_request(route, method, form_data) {
+            const API = "http://127.0.0.1:8000";
+            const API_ROUTE = API + "/" + route;
+            try {
+                console.log(get_template_form(method, form_data))
+                const response = await fetch(API_ROUTE, get_template_form(method, form_data));
+                if (!response.ok) {
+                    throw new Error("Response status :" + response.status);
+                }
+
+                const result = await response.json();
+
+                return result;
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

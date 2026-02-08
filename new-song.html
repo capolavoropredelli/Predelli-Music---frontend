@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <style>
+        #music-container {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="index.html">home</a>
+    <h1>Add track</h1>
+    <p id="status"></p>
+    <form method="get" name="search-form" id="search-form">
+        <input type="text" placeholder="search track from youtube" name="search" id="search">
+        <input type="submit" id="search-submit">
+    </form>
+    <button id="download">download</button>
+
+
+    <div id="music-container"></div>
+
+    <script>
+        const search_bar = document.getElementById("search");
+        const form = document.getElementById("search-form");
+        const download_button = document.getElementById("download")
+        const status = document.getElementById("status");
+
+        let new_songs = [];
+        if (sessionStorage.getItem("new_songs") != null) {
+            new_songs = JSON.parse(sessionStorage.getItem("new_songs"))
+        }
+
+        download_button.addEventListener("click", async function () {
+            if (sessionStorage.getItem("new_songs") != null) {
+                new_songs = JSON.parse(sessionStorage.getItem("new_songs"))
+
+                new_songs.forEach(async function (s, index) {
+                    const label = document.getElementById(s);
+                    const form_data = new FormData();
+                    form_data.append("token", sessionStorage.getItem("API_token"));
+                    form_data.append("url", s);
+                    form_data.append("filename", label.innerText);
+
+                    status.innerText = "downloading... (" + index + "/" + new_songs.length + ")";
+                    const request = await api_request("yt_download", "POST", form_data);
+                    status.innerText = "downloading completed";
+                })
+
+            }
+
+        })
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            let text_inserted = document.forms["search-form"]["search"].value;
+            console.log(text_inserted);
+
+            const form_data = new FormData();
+            form_data.append("token", sessionStorage.getItem("API_token"));
+            form_data.append("query", text_inserted);
+
+            const yt_query = await api_request("yt_query", "POST", form_data);
+            const yt_results = yt_query.items;
+            const music_container = document.getElementById('music-container');
+
+            yt_results.forEach(r => {
+                const input = document.createElement("input");
+                const label = document.createElement("label");
+                const div = document.createElement("div");
+                input.type = "checkbox";
+                input.value = r.id.videoId;
+                label.id = r.id.videoId;
+                label.innerHTML = r.snippet.title + ' - <span style="color: gray;">' + r.snippet.channelTitle + "</span>";
+                div.appendChild(input);
+                div.appendChild(label);
+                music_container.appendChild(div);
+
+                input.addEventListener("change", function () {
+                    key = input.value
+                    if (input.checked) {
+                        if ((!new_songs.includes(key))) new_songs.push(key);
+                    } else {
+                        let index = new_songs.indexOf(key);
+                        let sub_arr_1 = new_songs.slice(0, index);
+                        let sub_arr_2 = new_songs.slice((index + 1), new_songs.length);
+                        new_songs = sub_arr_1.concat(sub_arr_2);
+                    }
+                    sessionStorage.setItem("new_songs", JSON.stringify(new_songs))
+                    console.log(new_songs)
+                })
+            });
+        })
+
+
+
+
+        function get_template_form(meth, form_data) {
+            return {
+                method: meth,
+                body: form_data
+            }
+        }
+
+        async function api_request(route, method, form_data) {
+            const API = "http://127.0.0.1:8000";
+            const API_ROUTE = API + "/" + route;
+            try {
+                const response = await fetch(API_ROUTE, get_template_form(method, form_data));
+                if (!response.ok) {
+                    throw new Error("Response status :" + response.status);
+                }
+
+                const result = await response.json();
+
+                return result;
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+    </script>
+</body>
+
+</html>
