@@ -81,7 +81,7 @@
         }
 
         async function api_request(route, method, form_data) {
-            const API = "http://127.0.0.1:8000";
+            const API = "https://apimusic.predelli.site";
             const API_ROUTE = API + "/" + route;
             try {
                 const response = await fetch(API_ROUTE, get_template_form(method, form_data));
@@ -98,5 +98,6 @@
         }
     </script>
 </body>
+
 
 </html>
