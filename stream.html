@@ -16,7 +16,7 @@
         // get info for API request
         const query_params = new URLSearchParams(window.location.search);
         const id = parseInt(query_params.get("id"));
-        const API = "http://127.0.0.1:8000";
+        const API = "https://apimusic.predelli.site";
         const api_stream = API + "/stream/" + id;
         const api_info = API + "/info/" + id;
 
@@ -150,5 +150,6 @@
         }
     </script>
 </body>
+
 
 </html>
