@@ -104,13 +104,13 @@
                 i++;
             }
 
-            if (i == queue.lenght) i = 0;
+            if (i == queue.lengt) i = 0;
             return queue[i];
         }
 
-        function skip() {
+        async function skip() {
             let next_track_id = next_in_queue();
-            stream(next_track_id);
+            await stream(next_track_id);
         }
 
         async function api_request(URL) {
@@ -132,7 +132,7 @@
             const api_stream = API + "/stream/" + id;
             const api_info = API + "/info/" + id;
 
-            get_info();
+            await get_info();
 
             audio.src = api_stream;
             audio.play().catch(err => {
@@ -151,6 +151,7 @@
 
 
 </html>
+
 
 
 
