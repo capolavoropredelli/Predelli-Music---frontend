@@ -17,15 +17,13 @@
         const query_params = new URLSearchParams(window.location.search);
         const id = parseInt(query_params.get("id"));
         const API = "https://apimusic.predelli.site";
-        const api_stream = API + "/stream/" + id;
-        const api_info = API + "/info/" + id;
-
-        // API request
-        get_info();
 
         // getting document's elements
         const audio = document.getElementById("player");
         const skip_button = document.getElementById("skip");
+        
+        // API request
+        stream(id);
 
         // setting random or sequential queue
         const random = document.getElementById("random");
@@ -34,12 +32,6 @@
         } else {
             random.checked = false;
         }
-
-        // adding API streaming for audio source
-        audio.src = api_stream;
-        audio.play().catch(err => {
-    console.error("Autoplay bloccato:", err);
-});
 
         // skipping and end of track handling
         random.addEventListener("change", function () {
@@ -117,15 +109,8 @@
         }
 
         function skip() {
-            let next_track_id;
-            if (random.checked) {
-                sessionStorage.setItem("random", true);
-                next_track_id = Math.floor((Math.random() * sessionStorage.getItem("track-count"))) + 1;
-            } else {
-                sessionStorage.setItem("random", false);
-                next_track_id = id + 1;
-            }
-            window.location.replace("stream.html?id=" + next_track_id);
+            let next_track_id = next_in_queue();
+            stream(next_track_id);
         }
 
         async function api_request(URL) {
@@ -143,6 +128,17 @@
             }
         }
 
+        async function stream(id) {
+            const api_stream = API + "/stream/" + id;
+            const api_info = API + "/info/" + id;
+
+            get_info();
+
+            audio.src = api_stream;
+            audio.play().catch(err => {
+            console.error("Autoplay bloccato:", err);
+        }
+        
         async function get_info() {
             const result = await api_request(api_info);
             title = result.title;
@@ -155,5 +151,6 @@
 
 
 </html>
+
 
 
