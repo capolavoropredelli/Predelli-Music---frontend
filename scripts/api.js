@@ -18,8 +18,17 @@ async function api_request(route, method, form_data) {
 
         const result = await response.json();
 
+        if (!res.ok) {
+            throw new Error(data.detail || "Errore sconosciuto")
+        }
+
+        if (!res.success) {
+            throw new Error(data.detail || "Errore sconosciuto")
+        }
+
         return result;
     } catch (error) {
         console.error(error.message);
     }
+
 }
