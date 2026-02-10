@@ -1,4 +1,5 @@
 if (sessionStorage.getItem("isLogged") != true) {
-    window.location.replace("login.html");
+       window.location.href = "login.html;
 }
+
 
