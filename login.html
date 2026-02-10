@@ -13,11 +13,6 @@
     </form>
 
     <script>
-
-        //if (sessionStorage.getItem("API_token") != null) {
-        //    window.location.replace("index.html");
-        //}
-
         const form = document.getElementById("login-form");
 
         form.addEventListener("submit", async function (event) {
@@ -26,12 +21,9 @@
 
             const response = await api_request("login", "POST", form_data);
 
-            sessionStorage.setItem("API_token", response.token);
-            console.log("risposta ricevuta:", response.token);
-            console.log("Token ricevuto:", response.token);
-            console.log("Token ricevuto:", sessionStorage.getItem("API_token"));
-
-            if (sessionStorage.getItem("API_token") != null && sessionStorage.getItem("API_token") != undefined) {
+            if(response.success == true) {
+                sessionStorage.setItem("isLogged", true);
+                
                 console.log("redirecting...");
                 window.location.replace("index.html");
             } else {
@@ -68,3 +60,4 @@
 
 
 </html>
+
