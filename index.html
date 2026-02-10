@@ -29,7 +29,8 @@
     <h2>Playlists</h2>
     <a href="new-playlist.html"><button>add new</button></a>
     <div id="playlist-container"></div>
-
+    <script src="scripts/utils.js"></script>
+    <script src="scripts/api.js"></script>
     <script>
         const p = document.querySelector("p");
         const playcontainer = document.getElementById("playlist-container");
@@ -72,32 +73,9 @@
         })
 
         console.log('sessionStorage.getItem("API_token") :>> ', sessionStorage.getItem("API_token"));
-
-        function get_template_form(meth, form_data) {
-            return {
-                method: meth,
-                body: form_data
-            }
-        }
-
-        async function api_request(route, method, form_data) {
-            const API = "https://apimusic.predelli.site";
-            const API_ROUTE = API + "/" + route;
-            try {
-                const response = await fetch(API_ROUTE, get_template_form(method, form_data));
-                if (!response.ok) {
-                    throw new Error("Response status :" + response.status);
-                }
-
-                const result = await response.json();
-
-                return result;
-            } catch (error) {
-                console.error(error.message);
-            }
-        }
     </script>
 </body>
 
 
 </html>
+
