@@ -37,7 +37,9 @@
 
         // adding API streaming for audio source
         audio.src = api_stream;
-        audio.play();
+        audio.play().catch(err => {
+    console.error("Autoplay bloccato:", err);
+});
 
         // skipping and end of track handling
         random.addEventListener("change", function () {
@@ -153,4 +155,5 @@
 
 
 </html>
+
 
