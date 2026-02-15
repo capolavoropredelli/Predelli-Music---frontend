@@ -40,8 +40,6 @@
             console.log(playlist_tracks);
 
             const form_data = new FormData();
-
-            form_data.append("token", sessionStorage.getItem("API_token"));
             form_data.append("name", playlist_name);
             form_data.append("tracks", playlist_tracks);
 
@@ -80,7 +78,6 @@
 
         async function load_tracks() {
             const form_data = new FormData();
-            form_data.append("token", sessionStorage.getItem("API_token"));
             form_data.append("playlist_name", "music");
 
             const tracks = await api_request("tracks", "POST", form_data);
@@ -136,6 +133,4 @@
     </script>
 </body>
 
-
 </html>
-

@@ -21,7 +21,6 @@
     </form>
     <button id="download">download</button>
 
-
     <div id="music-container"></div>
 
     <script src="scripts/utils.js"></script>
@@ -44,7 +43,6 @@
                 new_songs.forEach(async function (s, index) {
                     const label = document.getElementById(s);
                     const form_data = new FormData();
-                    form_data.append("token", sessionStorage.getItem("API_token"));
                     form_data.append("url", s);
                     form_data.append("filename", label.innerText);
 
@@ -64,7 +62,6 @@
             console.log(text_inserted);
 
             const form_data = new FormData();
-            form_data.append("token", sessionStorage.getItem("API_token"));
             form_data.append("query", text_inserted);
 
             const yt_query = await api_request("yt_query", "POST", form_data);
@@ -99,13 +96,7 @@
             });
         })
 
-
-    <script src="scripts/utils.js"></script>
-    <script src="scripts/api.js"></script>
     </script>
 </body>
 
-
 </html>
-
-

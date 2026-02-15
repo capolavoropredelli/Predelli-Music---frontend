@@ -15,6 +15,11 @@
     <script src="scripts/utils.js"></script>
     <script src="scripts/api.js"></script>
     <script>
+
+        //if (sessionStorage.getItem("API_token") != null) {
+        //    window.location.replace("index.html");
+        //}
+
         const form = document.getElementById("login-form");
 
         form.addEventListener("submit", async function (event) {
@@ -23,20 +28,21 @@
 
             const response = await api_request("login", "POST", form_data);
 
-            if(response.success == true) {
+            console.log(response);
+
+            if (response.success == true) {
                 sessionStorage.setItem("isLogged", true);
-                
+            }
+
+            if (sessionStorage.getItem("isLogged") == 'true') {
                 console.log("redirecting...");
                 window.location.replace("index.html");
-            } else {
-                console.log("token not saved");
             }
         });
+
+
 
     </script>
 </body>
 
-
 </html>
-
-

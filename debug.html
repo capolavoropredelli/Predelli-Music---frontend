@@ -1,0 +1,19 @@
+<script src="scripts/utils.js"></script>
+<script src="scripts/api.js"></script>
+
+<body onload="load()"></body>
+<script>
+    async function load() {
+        let request = {
+            method: "GET",
+            credentials: "include"
+        }
+
+        const API_ROUTE = API_URL + "/" + "database/a";
+
+        const response = await fetch(API_ROUTE, request);
+        const result = await response.json();
+        console.log(result);
+    }
+
+</script>

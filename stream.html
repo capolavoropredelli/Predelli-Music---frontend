@@ -10,22 +10,22 @@
     <input type="checkbox" id="random" name="random">
     <label for="random">random</label> <br>
     <button id="skip">skip</button> <br>
-    <audio id="player" controls autoplay></audio>
+    <audio id="player" controls></audio>
 
-    <script src="scripts/utils.js"></script>
-    <script src="scripts/api.js"></script>
     <script>
         // get info for API request
         const query_params = new URLSearchParams(window.location.search);
         const id = parseInt(query_params.get("id"));
-        const API = "https://apimusic.predelli.site";
+        const API = "http://127.0.0.1:8000";
+        const api_stream = API + "/stream/" + id;
+        const api_info = API + "/info/" + id;
+
+        // API request
+        get_info();
 
         // getting document's elements
         const audio = document.getElementById("player");
         const skip_button = document.getElementById("skip");
-        
-        // API request
-        stream(id);
 
         // setting random or sequential queue
         const random = document.getElementById("random");
@@ -34,6 +34,10 @@
         } else {
             random.checked = false;
         }
+
+        // adding API streaming for audio source
+        audio.src = api_stream;
+        audio.play();
 
         // skipping and end of track handling
         random.addEventListener("change", function () {
@@ -106,13 +110,20 @@
                 i++;
             }
 
-            if (i == queue.lengt) i = 0;
+            if (i == queue.lenght) i = 0;
             return queue[i];
         }
 
-        async function skip() {
-            let next_track_id = next_in_queue();
-            await stream(next_track_id);
+        function skip() {
+            let next_track_id;
+            if (random.checked) {
+                sessionStorage.setItem("random", true);
+                next_track_id = Math.floor((Math.random() * sessionStorage.getItem("track-count"))) + 1;
+            } else {
+                sessionStorage.setItem("random", false);
+                next_track_id = id + 1;
+            }
+            window.location.replace("stream.html?id=" + next_track_id);
         }
 
         async function api_request(URL) {
@@ -130,17 +141,6 @@
             }
         }
 
-        async function stream(id) {
-            const api_stream = API + "/stream/" + id;
-            const api_info = API + "/info/" + id;
-
-            await get_info();
-
-            audio.src = api_stream;
-            audio.play().catch(err => {
-            console.error("Autoplay bloccato:", err);
-        }
-        
         async function get_info() {
             const result = await api_request(api_info);
             title = result.title;
@@ -151,10 +151,4 @@
     </script>
 </body>
 
-
 </html>
-
-
-
-
-

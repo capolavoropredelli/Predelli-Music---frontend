@@ -3,6 +3,7 @@
 <html>
 
 <head>
+    <link rel="stylesheet" href="style/style.css">
     <style>
         #music-container {
             display: flex;
@@ -13,11 +14,17 @@
 
 <body onload="load_tracks()">
     <a href="index.html">home</a>
+    <audio id="track-audio"></audio>
+    <button id="queue-button">queue</button>
+    <button id="next-button">next</button>
+    <button id="prev-button">previous</button>
+    <input type="checkbox" id="random" name="random">
+    <label for="random">random</label> <br>
+    <div id="queue-container"></div>
     <h1>All music</h1>
     <button id="random-play">riproduci casuale</button>
     <form method="get" name="search-form">
         <input type="text" placeholder="search" name="search" id="search">
-        <input type="submit">
     </form>
 
 
@@ -26,6 +33,8 @@
     <script src="scripts/utils.js"></script>
     <script src="scripts/api.js"></script>
     <script>
+        // QUERYSTRING
+        // getting id from querystring
         const params = new URLSearchParams(window.location.search);
         let playlist;
         if (params.get("playlist") != null) {
@@ -34,22 +43,93 @@
             playlist = "music";
         }
 
+        // HTML DOCUMENT 
+        // getting document elements
         const random_play = document.getElementById("random-play");
         const search_bar = document.getElementById("search");
+        const music_container = document.getElementById('music-container');
+        const track_audio = document.getElementById("track-audio");
+        const queue_button = document.getElementById("queue-button");
+        const queue_container = document.getElementById("queue-container");
+        const next_button = document.getElementById("next-button");
+        const prev_button = document.getElementById("prev-button");
+        const random_chk = document.getElementById("random");
+
+        // VARIBLES
+        let queue = Array();
+        let tracks_info = new Map();
 
 
+        // FUNCTIONS
+        // function to fetch tracks from the API and load them in session
+        async function load_tracks() {
+
+            // API request
+            const form_data = new FormData();
+            form_data.append("playlist_name", playlist);
+            const tracks = await api_request("tracks", "POST", form_data);
+
+            // API response handling
+            tracks.forEach(t => {
+                queue.push(t.id);
+                tracks_info.set(t.id, [t.title, t.author])
+            });
+
+            // display info
+            display_tracks();
+
+            // save to session
+            //sessionStorage.setItem("queue", JSON.stringify(ids));
+            //const arr = Array.from(tracks_info.entries());
+            //sessionStorage.setItem("tracks_info", JSON.stringify(arr));
+        }
+
+        // function to display all the tracks in tracks_info map
+        function display_tracks(tracks = tracks_info) {
+            music_container.innerHTML = "";
+
+            tracks.forEach((value, key) => {
+                const a = document.createElement("a");
+                a.innerText = value[0] + " (" + value[1] + ")";
+                a.dataset.id = key;
+                music_container.appendChild(a);
+            });
+        }
+
+        // function to play a song
+        function play(id = queue[0]) {
+            console.log(id)
+
+            // changing audio source (API) and playing
+            track_audio.src = API_URL + "/stream/" + id;
+            track_audio.controls = true;
+            track_audio.play();
+        }
+
+
+        // LISTENERS
+        // handling tracks play trigger
+        music_container.addEventListener("click", e => {
+            if (e.target.tagName === "A") {
+                play(e.target.dataset.id);
+            }
+        });
+
+        // handling search
         search_bar.addEventListener("keyup", function () {
-            const arr = Array.from(JSON.parse(sessionStorage.getItem("tracks_info")));
-            const tracks_info = new Map(arr);
+
+            // getting search text
             let text_inserted = document.forms["search-form"]["search"].value;
             console.log(text_inserted);
             let found = new Map();
 
+            // looking for match between tracks and searched text
             let title, author;
-            tracks.forEach((value, key) => {
+            tracks_info.forEach((value, key) => {
                 title = value[0];
                 author = value[1];
 
+                // avoiding case sensitive research
                 title = title.toLowerCase();
                 author = author.toLowerCase();
                 text_inserted = text_inserted.toLowerCase();
@@ -59,60 +139,76 @@
                 }
             })
 
-            //console.log('tracks_info :>> ', tracks_info);
-            console.log('found :>> ', found);
+            // display
             display_tracks(found);
         })
 
-        async function load_tracks() {
-            const form_data = new FormData();
-            form_data.append("token", sessionStorage.getItem("API_token"));
-            form_data.append("playlist_name", playlist);
-
-            const tracks = await api_request("tracks", "POST", form_data);
-            const music_container = document.getElementById('music-container');
-
-            console.log('music_container :>> ', music_container);
-
-            let count = 0;
-            let ids = [];
-            let tracks_info = new Map();
-            tracks.forEach(t => {
-                ids.push(t.id);
-                tracks_info.set(t.id, [t.title, t.author])
-            });
-            display_tracks(tracks_info);
-            sessionStorage.setItem("queue", JSON.stringify(ids));
-            const arr = Array.from(tracks_info.entries());
-            sessionStorage.setItem("tracks_info", JSON.stringify(arr));
-            console.log('tracks_info :>> ', tracks_info);
-        }
-
-        function display_tracks(tracks) {
-            const music_container = document.getElementById('music-container');
-            music_container.innerHTML = "";
-
-            tracks.forEach((value, key) => {
-                const a = document.createElement("a");
-                a.href = "stream.html?id=" + key;
-                a.innerText = value[0] + "    (" + value[1] + ")"
-                music_container.appendChild(a);
-            })
-        }
-
+        // handling random play button
         random_play.addEventListener("click", function () {
-            let queue = JSON.parse(sessionStorage.getItem("queue"));
-            let random_index = Math.floor(Math.random() * queue.length);
-            let track_id = queue[random_index];
-            console.log('queue :>> ', queue);
-            console.log('queue.length :>> ', queue.length);
-            console.log('random_index :>> ', random_index);
-            console.log('track_id :>> ', track_id);
-            window.location.replace("stream.html?id=" + track_id);
+
+            // make queue random
+            queue = randomize(queue);
+            random_chk.checked = true;
+
+            // playing track
+            play();
+        })
+
+        // handling queue button
+        queue_button.addEventListener("click", function () {
+
+            if (queue_container.childElementCount == 0) {
+                // show queue
+                queue.forEach(track_id => {
+                    const p = document.createElement("p");
+                    p.innerText = tracks_info.get(track_id)[0];
+                    queue_container.appendChild(p);
+                })
+            } else {
+                // hide queue
+                queue_container.innerHTML = "";
+            }
+        })
+
+        // handling next button
+        next_button.addEventListener("click", function () {
+
+            // queue update
+            shift_sx(queue);
+
+            // play
+            play();
+        })
+
+        // handling previuos button
+        prev_button.addEventListener("click", function () {
+
+            // queue update
+            shift_dx(queue);
+
+            // play
+            play();
+        })
+
+        // handling random checkbox
+        random_chk.addEventListener("change", function () {
+            if (random.checked) {
+                queue = randomize(queue);
+            } else {
+                queue = sort(queue);
+            }
+        })
+
+        // handling end of track
+        track_audio.addEventListener("ended", function () {
+
+            // updating queue
+            shift_sx(queue);
+
+            // play next
+            play();
         })
     </script>
 </body>
 
-
 </html>
-
