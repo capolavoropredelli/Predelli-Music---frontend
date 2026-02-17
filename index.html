@@ -3,7 +3,6 @@
 <html>
 
 <head>
-    <link rel="stylesheet" href="style/index.css">
     <style>
         #playlist-container {
             display: flex;
@@ -13,67 +12,54 @@
 </head>
 
 <body onload="load_info()">
-    <div id="container">
-        <div id="local-navbar">
-            <a id="current">playlists</a>
-            <a>tracks</a>
-        </div>
-        <p></p>
-        <form method="get" id="search-container">
-            <input type="text" placeholder="search" name="search" id="search-bar">
-            <input type="submit" value="" id="search-button">
-        </form>
+    <h1>Predelli music</h1>
+    <p></p>
+    <form method="get">
+        <input type="text" placeholder="search" name="search">
+        <input type="submit">
+    </form>
 
-        <div id="pl-container">
-        </div>
-    </div>
+    <h2>Actions</h2>
+    <a href="musics.html"><button>tutte le canzoni</button></a>
+    <a href="login.html"><button>login</button></a>
+    <a href="new-song.html"><button>aggiungi una canzone</button></a>
+    <button id="logout">log out</button>
+    <button id="scan-again">scan again</button>
 
-    <a href="musics.html?playlist=music"><button>all music</button></a>
+    <h2>Playlists</h2>
+    <a href="new-playlist.html"><button>add new</button></a>
+    <div id="playlist-container"></div>
 
     <script src="scripts/utils.js"></script>
     <script src="scripts/api.js"></script>
     <script>
         const p = document.querySelector("p");
-        const playcontainer = document.getElementById("pl-container");
+        const playcontainer = document.getElementById("playlist-container");
         const logout = document.getElementById("logout");
         const scan_button = document.getElementById("scan-again");
         const new_playlist_button = document.getElementById("new-playlist");
 
 
         const form_data = new FormData();
+        form_data.append("token", sessionStorage.getItem("API_token"));
 
 
 
         async function load_info() {
-            const result = await api_request("scan", "post", form_data);
+            if (sessionStorage.getItem("scanned") == true) {
+                const result = await api_request("scan", "post", form_data);
+            }
+
             const playlist = await api_request("playlists", "post", form_data)
-
             playlist.forEach(p => {
-                const pl_object = document.createElement("div");
-                const pl_icon = document.createElement("div");
-                const pl_name = document.createElement("p");
-                pl_object.classList.add("pl-object");
-                pl_icon.classList.add("pl-icon");
-                pl_name.classList.add("pl-name");
-
-                pl_name.innerText = p.name;
-                pl_object.appendChild(pl_icon);
-                pl_object.appendChild(pl_name);
-                playcontainer.appendChild(pl_object);
+                const link = document.createElement("a");
+                link.innerText = p.name;
+                link.href = "musics.html?playlist=" + p.name;
+                playcontainer.appendChild(link);
             });
 
-            const pl_object = document.createElement("div");
-            const pl_icon = document.createElement("div");
-            const pl_name = document.createElement("p");
-            pl_object.classList.add("pl-object");
-            pl_icon.id = "pl-add";
-            pl_name.classList.add("pl-name");
-
-            pl_name.innerText = "add playlist";
-            pl_object.appendChild(pl_icon);
-            pl_object.appendChild(pl_name);
-            playcontainer.appendChild(pl_object);
         }
+
 
         scan_button.addEventListener("click", async function () {
             console.log("click");
@@ -82,12 +68,10 @@
             p.innerText = "tracks updated";
         })
 
-        logout.addEventListener("click", async function () {
-            const form_data = new FormData();
-            const result = await api_request("logout", "POST", form_data);
-            location.reload();
+        logout.addEventListener("click", function () {
+            sessionStorage.clear();
+            window.location.replace("index.html");
         })
-
     </script>
 </body>
 
