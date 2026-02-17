@@ -1,4 +1,4 @@
-const API_URL = "https://musicapi.predelli.site"
+const API_URL = "https://apimusic.predelli.site"
 
 function get_template_form(meth, form_data) {
     return {
@@ -56,4 +56,5 @@ async function refresh_tokens() {
     }
 
 }
+
 
