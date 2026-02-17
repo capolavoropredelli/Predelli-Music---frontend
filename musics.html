@@ -120,6 +120,11 @@
                 play(e.target.dataset.id);
             }
         });
+
+        track_audio.addEventListener("error", function () {
+            refresh_tokens();
+            play();
+        })
         
         // handling search
         search_bar.addEventListener("keyup", function () {
@@ -220,3 +225,4 @@
 
 
 </html>
+
