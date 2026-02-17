@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000"
+const API_URL = "https://musicapi.predelli.site:8000"
 
 function get_template_form(meth, form_data) {
     return {
@@ -54,4 +54,5 @@ async function refresh_tokens() {
         console.error(error.message);
         return false;
     }
+
 }
